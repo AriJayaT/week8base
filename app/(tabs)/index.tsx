@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+import { createUserWithEmailAndPassword, deleteUser, getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -13,12 +14,16 @@ import '../../firebase';
 
 const {firebaseConfig} = require('../../firebase');
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
 
 export default function HomeScreen() {
-  
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+// const analytics = getAnalytics(app);  
+const auth = getAuth(app);
+
+
 const [loginout, setloginout] = useState('Login');
 const [created, setCreate] = useState('create');
 const [pword, setPword] = useState('password');
@@ -35,7 +40,22 @@ async function debug(tag: String, str: String) {
 function loginA() {
   setEmail(email);
   setPword(pword);
-    debug("loginA", "login: " + email + " password: " + pword + "success");   
+  
+  signInWithEmailAndPassword(auth, email, pword)
+  .then((userCredential) => {
+    // signed in
+    const user = userCredential.user;
+    debug("SignInEmailPassword", "success: " + user.email);
+    setloginout("login: " + user.email);
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    setloginout("Login unsuccessful");
+    debug("SignInEmailPassword", errorCode + " " + errorMessage);
+  });
+
+  debug("loginA", "login: " + email + " password: " + pword + "success");   
 }
 
 
@@ -43,17 +63,55 @@ function createA() {
   setEmail(email);
   setPword(pword);
   setCreate('created');
-    debug("createA", "created: "  + email + " password: " + pword);      
+  createUserWithEmailAndPassword(auth, email, pword)
+  .then((userCredential) => {
+    // created
+    const user = userCredential.user;
+    debug("CreateEmailPassword", "success: " + user.email);
+    setloginout("created + login: " + user.email);
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    setloginout("Create unsuccessful");
+    debug("CreateEmailPassword", errorCode + " " + errorMessage);
+  });
+
+  debug("createA", "created: "  + email + " password: " + pword);      
 }
 
 function logoutA() {
   setEmail(email);
   setPword(pword);
-  debug("createA", "created: "  + email + " password: " + pword);      
+  debug("createA", "created: "  + email + " password: " + pword);
+  signOut(auth)
+  .then((userCredential) => {
+    // logged out
+    debug("SignOutEmailPassword", "success: " + email);
+    setloginout("signed out: " + email);
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    setloginout("signed out unsuccessful");
+    debug("SignOutEmailPassword", errorCode + " " + errorMessage);
+  });
 }
 function deleteA() {
   setEmail(email);
   setPword(pword);
+  deleteUser(auth.currentUser!)
+  .then((userCredential) => {
+    // deleted
+    debug("DeleteEmailPassword", "success: " + email);
+    setloginout("deleted: " + email);
+  })
+  .catch((error) => {
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    setloginout("deleted unsuccessful");
+    debug("DeleteEmailPassword", errorCode + " " + errorMessage);
+  });
   debug("deleteA", "Delete: "  + email + " password: " + pword);      
 
 }
